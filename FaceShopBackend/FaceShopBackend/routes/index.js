@@ -84,7 +84,7 @@ router.get('/forgot', function (req, res, next) {
                 service: 'gmail',
                 auth: {
                     user: 'francenghia@gmail.com',
-                    pass: 'Nghia0942872954'
+                    pass: 'secret'
                 }
             });
 
