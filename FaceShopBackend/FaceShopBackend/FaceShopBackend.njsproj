@@ -37,6 +37,7 @@
     </Compile>
     <Content Include="package.json" />
     <Content Include="README.md" />
+    <Content Include="routes\private.json" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="routes\" />

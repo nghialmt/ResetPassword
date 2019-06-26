@@ -7,6 +7,9 @@ var uuid = require('uuid')
 var nodemailer = require('nodemailer')
 var moment = require('moment')
 
+var admin = require('firebase-admin')
+
+
 //====================
 //HASH AND SALT
 //====================
@@ -63,9 +66,9 @@ function shuffleArray(array) {
     return array;
 }
 
-//router.get('/', function (req, res, next) {
-//    console.log(generatePassword(8));
-//})
+router.get('/', function (req, res, next) {
+    res.send("HELLO WORLD")
+})
 
 
 //====================
@@ -73,9 +76,9 @@ function shuffleArray(array) {
 //====================
 
 
-router.get('/forgot', function (req, res, next) {
-    if (req.query.key == API_KEY) {
-        var email = req.query.email;
+router.post('/forgot', function (req, res, next) {
+    if (req.body.key == API_KEY) {
+        var email = req.body.email;
 
         if (email != null) {
             var initPassword = generatePassword(6);
@@ -84,7 +87,7 @@ router.get('/forgot', function (req, res, next) {
                 service: 'gmail',
                 auth: {
                     user: 'francenghia@gmail.com',
-                    pass: 'secret'
+                    pass: 'Nghia0942872954'
                 }
             });
 
@@ -115,19 +118,60 @@ router.get('/forgot', function (req, res, next) {
     }
 })
 
+
+//==============
+//PUSH NOTIFICATION
+//==============
+var serviceAccount = require("./private.json");
+
+
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: "https://faceshop-96202.firebaseio.com"
+});
+
+
+
+
+
+
+
 router.get('/reset-password', function (req, res, next) {
     if (req.query.key == API_KEY) {
         var email = req.query.email;
         var pass = req.query.pass;
         var salt = req.query.salt;
-        if (email != null && pass != null && salt!=null) {
+        if (email != null && pass != null && salt != null) {
+
+
             req.getConnection(function (error, conn) {
-                conn.query(' UPDATE User SET password= ?,salt = ? WHERE email = ?', [pass, salt, email], function (err, rows, fields) {
+                conn.query('UPDATE User SET password= ?,salt = ? WHERE email = ?', [pass, salt, email], function (err, rows, fields) {
                     if (err) {
                         res.status(500);
                         res.send(JSON.stringify({ success: false, message: err.message }))
                     } else {
                         res.send(JSON.stringify({ success: true, message: "Success" }))
+
+                        var token = ['dyMkj3JVXmM:APA91bH2Wy2JwI5afdmaY-A8aSRT4uL34LLKcdq99dGJe-V-dBD8uyg0aE1dgAP7z6pARJxPulBe6n-lz44_fA1uWWF1XBjOOgfFSG3DzTemwSxcEsOZKmnpkXGHjgNuWFwQsiQzOn8O'];
+                        var payload = {
+                            notification: {
+                                title: "Reset password",
+                                body: "Mật khẩu đã được thay đổi!"
+                            }
+                        };
+
+                        var options = {
+                            priority: "high",
+                            timeToLive: 60 * 60 * 24
+                        };
+
+                        admin.messaging().sendToDevice(token, payload, options)
+                            .then(function (response) {
+                                console.log("Successfully sent message:", response);
+                            })
+                            .catch(function (error) {
+                                console.log("Error sending message:", error);
+                            });
                     }
                 });
             })
